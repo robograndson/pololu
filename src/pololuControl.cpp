@@ -35,7 +35,7 @@
 	#include <sys/time.h>
 #endif
 
-#include "RPMSerialInterface.h"
+#include "beginner_tutorials/RPMSerialInterface.h"
 
 #define DEVICENUMBER 12
 #define PINSTEER 4
@@ -63,11 +63,19 @@ void steering_callback(const std_msgs::Int64 &msg)
 
 void motor_callback(const std_msgs::Int64 &msg)
 {
-	//unsigned short motor_speed;
-	//motor_speed = msg.data;
-	//serialInterface->setTargetCP(PINMOTOR, motor_speed);
-	serialInterface->setTargetCP(PINMOTOR, msg.data);
-	//Utils::sleep(1000);
+	if (msg.data >= 6000)
+	{
+		serialInterface->setTargetCP(PINMOTOR, msg.data);
+	}
+	else
+	{
+		serialInterface->setTargetCP(PINMOTOR, msg.data);
+		Utils::sleep(50);
+		serialInterface->setTargetCP(PINMOTOR, 6000);
+		Utils::sleep(50);
+		serialInterface->setTargetCP(PINMOTOR, msg.data);
+	}
+	
 	ROS_INFO("%d",msg.data);
 }
 
