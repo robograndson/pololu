@@ -24,16 +24,14 @@
 #include <stdio.h>
 #include <cmath>
 #include "std_msgs/Int64.h"
+#include "std_msgs/String.h"
 #include "ros/ros.h"
+#include <termios.h>
 
-#if _WIN32
-	#include <Windows.h>
-#else
-	#include <unistd.h>
-	#include <sys/timeb.h>
-	#include <time.h>
-	#include <sys/time.h>
-#endif
+#include <unistd.h>
+#include <sys/timeb.h>
+#include <time.h>
+#include <sys/time.h>
 
 #include "beginner_tutorials/RPMSerialInterface.h"
 
@@ -56,6 +54,20 @@ private:
 	static unsigned long long int mInitialTickCount;
 };
 
+int getch()
+{
+  static struct termios oldt, newt;
+  tcgetattr( STDIN_FILENO, &oldt);           // save old settings
+  newt = oldt;
+  newt.c_lflag &= ~(ICANON | ECHO);                 // disable buffering      
+  tcsetattr( STDIN_FILENO, TCSANOW, &newt);  // apply new settings
+
+  int c = getchar();  // read character (non-blocking)
+
+  tcsetattr( STDIN_FILENO, TCSANOW, &oldt);  // restore old settings
+  return c;
+}
+
 void steering_callback(const std_msgs::Int64 &msg)
 {
 	serialInterface->setTargetCP(PINSTEER, msg.data);
@@ -63,36 +75,18 @@ void steering_callback(const std_msgs::Int64 &msg)
 
 void motor_callback(const std_msgs::Int64 &msg)
 {
-	if (msg.data >= 6000)
-	{
-		serialInterface->setTargetCP(PINMOTOR, msg.data);
-	}
-	else
-	{
-		serialInterface->setTargetCP(PINMOTOR, msg.data);
-		Utils::sleep(50);
-		serialInterface->setTargetCP(PINMOTOR, 6000);
-		Utils::sleep(50);
-		serialInterface->setTargetCP(PINMOTOR, msg.data);
-	}
-	
-	ROS_INFO("%d",msg.data);
+	serialInterface->setTargetCP(PINMOTOR, msg.data);
 }
-
 
 int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "pololuControl");
     ros::NodeHandle n;
-	steering_sub = n.subscribe("steering",1000, steering_callback);
+	steering_sub = n.subscribe("steer",1000, steering_callback);
 	motor_sub = n.subscribe("motor",1000, motor_callback);
 
-#ifdef _WIN32
-	std::string portName = "COM4";
-#else
 	std::string portName = "/dev/ttyACM0";
-	//std::string portName = "/dev/cu.usbmodem00031501"; // Example for Mac OS, the Maestro creates two devices, use the one with the lowest number (the command port)
-#endif
+
 	unsigned int baudRate = 9600;
 	printf("Creating serial interface '%s' at %d bauds\n", portName.c_str(), baudRate);
 	std::string errorMessage;
@@ -109,41 +103,25 @@ int main(int argc, char** argv)
 // Utils class implementation
 void Utils::sleep( unsigned int _Milliseconds )
 {
-#if _WIN32
-	::Sleep( _Milliseconds );
-#else
 	struct timespec l_TimeSpec;
 	l_TimeSpec.tv_sec = _Milliseconds / 1000;
 	l_TimeSpec.tv_nsec = (_Milliseconds % 1000) * 1000000;
 	struct timespec l_Ret;
 	nanosleep(&l_TimeSpec,&l_Ret);
-#endif
 }
 
 unsigned long long int Utils::getTickFrequency()
 {
-#if _WIN32
-	LARGE_INTEGER frequency;
-	QueryPerformanceFrequency(&frequency);
-	return frequency.QuadPart;
-#else
-	// The gettimeofday function returns the time in microseconds. So it's frequency is 1,000,000.
 	return 1000000;
-#endif
 }
 
 unsigned long long int Utils::getTimeAsTicks()
 {
 	unsigned long long int tickCount;
-#if _WIN32
-	LARGE_INTEGER l;
-	QueryPerformanceCounter(&l);
-	tickCount = l.QuadPart;
-#else
 	struct timeval p;
 	gettimeofday(&p, NULL);	// Gets the time since the Epoch (00:00:00 UTC, January 1, 1970) in sec, and microsec
 	tickCount = (p.tv_sec * 1000LL * 1000LL) + p.tv_usec;
-#endif
+
 	if ( mInitialTickCount==0xffffffffffffffffUL )
 		mInitialTickCount = tickCount;
 	tickCount -= mInitialTickCount;
@@ -157,4 +135,3 @@ unsigned int Utils::getTimeAsMilliseconds()
 }
 
 unsigned long long int Utils::mInitialTickCount = 0xffffffffffffffffUL;
-

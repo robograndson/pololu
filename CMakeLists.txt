@@ -132,7 +132,12 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(control src/pololuControl.cpp)
+add_executable(pololuController src/pololuController.cpp)
+target_link_libraries(pololuController ${catkin_LIBRARIES} -lRapaPololuMaestro)
+
+add_executable(keyboardControl src/keyboardControl.cpp)
+target_link_libraries(keyboardControl ${catkin_LIBRARIES} gainputstatic)
+target_link_libraries(keyboardControl ${catkin_LIBRARIES} X11 GL rt)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
