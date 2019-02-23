@@ -33,7 +33,7 @@
 #include <time.h>
 #include <sys/time.h>
 
-#include "beginner_tutorials/RPMSerialInterface.h"
+#include "pololu/RPMSerialInterface.h"
 
 #define DEVICENUMBER 12
 #define PINSTEER 4
