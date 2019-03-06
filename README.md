@@ -3,7 +3,7 @@
 
 Before using this package, you need to install two library first, which are following:
 
-### [Gainput] (https://github.com/jkuhlmann/gainput)
+### [Gainput](https://github.com/jkuhlmann/gainput)
 
 You can follow these steps to install this library.
 ```bash
