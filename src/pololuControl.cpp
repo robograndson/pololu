@@ -38,20 +38,21 @@
 #define DEVICENUMBER 12
 #define PINSTEER 4
 #define PINMOTOR 2 
-
+#define OFFSET 200
 ros::Subscriber steering_sub, motor_sub; 
 RPM::SerialInterface* serialInterface;
+ros::Time start_time;
 // A utility class to provide cross-platform sleep and simple time methods
 class Utils
 {
 public:
-	static void sleep( unsigned int _Milliseconds );
-	static unsigned long long int getTickFrequency();
-	static unsigned long long int getTimeAsTicks();
-	static unsigned int getTimeAsMilliseconds();
+    static void sleep( unsigned int _Milliseconds );
+    static unsigned long long int getTickFrequency();
+    static unsigned long long int getTimeAsTicks();
+    static unsigned int getTimeAsMilliseconds();
 
 private:
-	static unsigned long long int mInitialTickCount;
+    static unsigned long long int mInitialTickCount;
 };
 
 int getch()
@@ -69,69 +70,73 @@ int getch()
 }
 
 void steering_callback(const std_msgs::Int64 &msg)
-{
-	serialInterface->setTargetCP(PINSTEER, msg.data);
+{	
+    if ((ros::Time::now() - start_time).toSec() > 3)
+        serialInterface->setTargetCP(PINSTEER, msg.data + OFFSET);
+    else
+        serialInterface->setTargetCP(PINSTEER, msg.data);
 }
 
 void motor_callback(const std_msgs::Int64 &msg)
 {
-	serialInterface->setTargetCP(PINMOTOR, msg.data);
+    serialInterface->setTargetCP(PINMOTOR, msg.data);
 }
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "pololuControl");
+    ros::init(argc, argv, "pololuControl");
     ros::NodeHandle n;
-	steering_sub = n.subscribe("steer",1000, steering_callback);
-	motor_sub = n.subscribe("motor",1000, motor_callback);
+    start_time = ros::Time::now();
+    steering_sub = n.subscribe("steer",1000, steering_callback);
+    motor_sub = n.subscribe("motor",1000, motor_callback);
 
-	std::string portName = "/dev/ttyACM0";
+    std::string portName = "/dev/ttyACM0";
 
-	unsigned int baudRate = 9600;
-	printf("Creating serial interface '%s' at %d bauds\n", portName.c_str(), baudRate);
-	std::string errorMessage;
-	serialInterface = RPM::SerialInterface::createSerialInterface( portName, baudRate, &errorMessage );
-	if ( !serialInterface )
-	{
-		printf("Failed to create serial interface. %s\n", errorMessage.c_str());
-		return -1;
-	}
-	ros::spin();
-	return 0;
+    unsigned int baudRate = 9600;
+    printf("Creating serial interface '%s' at %d bauds\n", portName.c_str(), baudRate);
+    std::string errorMessage;
+    serialInterface = RPM::SerialInterface::createSerialInterface( portName, baudRate, &errorMessage );
+    if ( !serialInterface )
+    {
+        printf("Failed to create serial interface. %s\n", errorMessage.c_str());
+        return -1;
+    }
+    ros::spin();
+    return 0;
 }
 
 // Utils class implementation
 void Utils::sleep( unsigned int _Milliseconds )
 {
-	struct timespec l_TimeSpec;
-	l_TimeSpec.tv_sec = _Milliseconds / 1000;
-	l_TimeSpec.tv_nsec = (_Milliseconds % 1000) * 1000000;
-	struct timespec l_Ret;
-	nanosleep(&l_TimeSpec,&l_Ret);
+    struct timespec l_TimeSpec;
+    l_TimeSpec.tv_sec = _Milliseconds / 1000;
+    l_TimeSpec.tv_nsec = (_Milliseconds % 1000) * 1000000;
+    struct timespec l_Ret;
+    nanosleep(&l_TimeSpec,&l_Ret);
 }
 
 unsigned long long int Utils::getTickFrequency()
 {
-	return 1000000;
+    return 1000000;
 }
 
 unsigned long long int Utils::getTimeAsTicks()
 {
-	unsigned long long int tickCount;
-	struct timeval p;
-	gettimeofday(&p, NULL);	// Gets the time since the Epoch (00:00:00 UTC, January 1, 1970) in sec, and microsec
-	tickCount = (p.tv_sec * 1000LL * 1000LL) + p.tv_usec;
+    unsigned long long int tickCount;
+    struct timeval p;
+    gettimeofday(&p, NULL);	// Gets the time since the Epoch (00:00:00 UTC, January 1, 1970) in sec, and microsec
+    tickCount = (p.tv_sec * 1000LL * 1000LL) + p.tv_usec;
 
-	if ( mInitialTickCount==0xffffffffffffffffUL )
-		mInitialTickCount = tickCount;
-	tickCount -= mInitialTickCount;
-	return tickCount;
+    if ( mInitialTickCount==0xffffffffffffffffUL )
+        mInitialTickCount = tickCount;
+    tickCount -= mInitialTickCount;
+    return tickCount;
 }
 
 unsigned int Utils::getTimeAsMilliseconds()
 {
-	unsigned int millecondsTime = static_cast<unsigned int>( (getTimeAsTicks() * 1000) / getTickFrequency() );
-	return millecondsTime;
+    unsigned int millecondsTime = static_cast<unsigned int>( (getTimeAsTicks() * 1000) / getTickFrequency() );
+    return millecondsTime;
 }
 
 unsigned long long int Utils::mInitialTickCount = 0xffffffffffffffffUL;

@@ -104,7 +104,7 @@ int main(int argc, char **argv)
 		}
 		else if (map.GetBool(Down))
 		{   
-            msg.data = 5500;
+            msg.data = 5700;
             motor_pub.publish(msg);
 			std::cout << "Down!!" << std::endl;
 		}
@@ -116,13 +116,13 @@ int main(int argc, char **argv)
 
         if (map.GetBool(Left))
 		{   
-            msg.data = 6800;
+            msg.data = 5500;
             steer_pub.publish(msg);
             std::cout << "Left!!" << std::endl;
 		}
 		else if (map.GetBool(Right))
 		{   
-            msg.data = 5200;
+            msg.data = 6500;
             steer_pub.publish(msg);
 			std::cout << "Right!!" << std::endl;
 		}
