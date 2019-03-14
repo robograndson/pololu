@@ -135,9 +135,9 @@ include_directories(
 add_executable(pololuControl src/pololuControl.cpp)
 target_link_libraries(pololuControl ${catkin_LIBRARIES} -lRapaPololuMaestro)
 
-add_executable(keyboardControl src/keyboardControl.cpp)
-target_link_libraries(keyboardControl ${catkin_LIBRARIES} gainputstatic)
-target_link_libraries(keyboardControl ${catkin_LIBRARIES} X11 GL rt)
+# add_executable(keyboardControl src/keyboardControl.cpp)
+# target_link_libraries(keyboardControl ${catkin_LIBRARIES} gainputstatic)
+# target_link_libraries(keyboardControl ${catkin_LIBRARIES} X11 GL rt)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
