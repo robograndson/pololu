@@ -38,7 +38,7 @@
 #define DEVICENUMBER 12
 #define PINSTEER 4
 #define PINMOTOR 2 
-#define OFFSET 100
+#define OFFSET -80
 ros::Subscriber steering_sub, motor_sub; 
 RPM::SerialInterface* serialInterface;
 ros::Time start_time;
@@ -88,9 +88,6 @@ int main(int argc, char** argv)
     motor_sub = n.subscribe("motor",1000, motor_callback);
 
     std::string portName = "/dev/ttyACM0";
-    serialInterface->setTargetCP(PINSTEER, 6000);
-    serialInterface->setTargetCP(PINMOTOR, 6000);
-    ros::Duration(5).sleep();
 
     unsigned int baudRate = 9600;
     printf("Creating serial interface '%s' at %d bauds\n", portName.c_str(), baudRate);
@@ -101,6 +98,9 @@ int main(int argc, char** argv)
         printf("Failed to create serial interface. %s\n", errorMessage.c_str());
         return -1;
     }
+    serialInterface->setTargetCP(PINSTEER, 6000);
+    serialInterface->setTargetCP(PINMOTOR, 6000);
+    ros::Duration(7).sleep();
     ros::spin();
     return 0;
 }
